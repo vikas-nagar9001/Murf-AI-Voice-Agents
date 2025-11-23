@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-11-23T20:38:08.002006",
+  "customer": "Because",
+  "order": {
+    "drinkType": "Flat White",
+    "size": "Extra Large",
+    "milk": "Coconut milk",
+    "extras": [],
+    "name": "Because"
+  },
+  "total_summary": "Extra Large Flat White with Coconut milk"
+}
