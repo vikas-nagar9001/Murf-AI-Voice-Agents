@@ -1,0 +1,25 @@
+[
+  {
+    "date": "2025-11-24",
+    "timestamp": "2025-11-24T20:54:15.985639",
+    "mood": "pretty good, a bit relaxed",
+    "energy_level": "pretty good, a bit relaxed",
+    "stress_level": "No distress",
+    "daily_objectives": [
+      "finish a couple of work tasks",
+      "get a workout in"
+    ],
+    "summary": "User reported feeling pretty good, a bit relaxed with pretty good, a bit relaxed energy and set 2 objectives for the day"
+  },
+  {
+    "date": "2025-11-24",
+    "timestamp": "2025-11-24T20:59:33.879861",
+    "mood": "pretty good",
+    "energy_level": "moderate",
+    "stress_level": null,
+    "daily_objectives": [
+      "do some cleaning"
+    ],
+    "summary": "User reported feeling pretty good with moderate energy and set 1 objective for the day"
+  }
+]
