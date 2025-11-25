@@ -1,0 +1,32 @@
+[
+  {
+    "id": "variables",
+    "title": "Variables",
+    "summary": "Variables are like containers that store values so you can use them later in your code. Think of them as labeled boxes where you can put different types of data like numbers, text, or true/false values. For example, you might create a variable called 'age' and store the number 25 in it, then use that variable throughout your program whenever you need that person's age.",
+    "sample_question": "What is a variable and why is it useful in programming?"
+  },
+  {
+    "id": "loops",
+    "title": "Loops",
+    "summary": "Loops are programming structures that let you repeat a block of code multiple times without writing it over and over again. There are different types of loops: a 'for loop' repeats a specific number of times, while a 'while loop' keeps repeating as long as a certain condition is true. For example, you could use a loop to print 'Hello' ten times or to process every item in a list.",
+    "sample_question": "Explain the difference between a for loop and a while loop, and give an example of when you'd use each."
+  },
+  {
+    "id": "functions",
+    "title": "Functions",
+    "summary": "Functions are reusable blocks of code that perform a specific task. They take inputs called parameters, do something with those inputs, and often return a result. Functions help organize your code and avoid repetition. For example, you might create a function called 'calculate_area' that takes length and width as parameters and returns the area of a rectangle.",
+    "sample_question": "What is a function, and how do parameters and return values work?"
+  },
+  {
+    "id": "conditionals",
+    "title": "Conditional Statements",
+    "summary": "Conditional statements allow your program to make decisions and execute different code based on certain conditions. The most common is the 'if statement' which checks if something is true and executes code accordingly. You can also use 'else' for alternative actions and 'elif' for multiple conditions. For example, you might check if a user's age is over 18 to determine if they can vote.",
+    "sample_question": "How do conditional statements work, and what's the difference between if, elif, and else?"
+  },
+  {
+    "id": "data_types",
+    "title": "Data Types",
+    "summary": "Data types define what kind of information you can store in variables. Common data types include integers for whole numbers, floats for decimal numbers, strings for text, booleans for true/false values, and lists for collections of items. Understanding data types is important because different operations work with different types of data.",
+    "sample_question": "What are the main data types in programming, and why is it important to understand them?"
+  }
+]

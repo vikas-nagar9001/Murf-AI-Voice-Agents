@@ -1,8 +1,10 @@
 import logging
 import json
 import os
+import random
 from datetime import datetime
 from typing import Dict, List, Optional
+from pathlib import Path
 
 from dotenv import load_dotenv
 from livekit.agents import (
@@ -27,76 +29,207 @@ logger = logging.getLogger("agent")
 load_dotenv(".env.local")
 
 
-class OrderState:
-    """Manages the current coffee order state"""
+class LearningState:
+    """Manages the current learning session state"""
     def __init__(self):
-        self.drink_type: Optional[str] = None
-        self.size: Optional[str] = None
-        self.milk: Optional[str] = None
-        self.extras: List[str] = []
-        self.name: Optional[str] = None
+        self.mode: Optional[str] = None  # "learn", "quiz", "teach_back"
+        self.current_concept: Optional[str] = None
+        self.concepts_learned: List[str] = []
+        self.quiz_attempts: Dict[str, int] = {}
+        self.teach_back_scores: Dict[str, List[str]] = {}  # concept_id -> list of feedback
     
     def to_dict(self) -> Dict:
         return {
-            "drinkType": self.drink_type,
-            "size": self.size,
-            "milk": self.milk,
-            "extras": self.extras,
-            "name": self.name
+            "mode": self.mode,
+            "currentConcept": self.current_concept,
+            "conceptsLearned": self.concepts_learned,
+            "quizAttempts": self.quiz_attempts,
+            "teachBackScores": self.teach_back_scores
         }
-    
-    def is_complete(self) -> bool:
-        """Check if all required fields are filled"""
-        return all([
-            self.drink_type is not None,
-            self.size is not None,
-            self.milk is not None,
-            self.name is not None
-        ])
-    
-    def get_missing_fields(self) -> List[str]:
-        """Get list of missing required fields"""
-        missing = []
-        if not self.drink_type:
-            missing.append("drink type")
-        if not self.size:
-            missing.append("size")
-        if not self.milk:
-            missing.append("milk preference")
-        if not self.name:
-            missing.append("name for the order")
-        return missing
 
 
-class Assistant(Agent):
+class TutorContentManager:
+    """Manages the tutor content from the JSON file"""
+    def __init__(self, content_file: str):
+        self.content_file = content_file
+        self.concepts = self._load_content()
+    
+    def _load_content(self) -> List[Dict]:
+        """Load concepts from the JSON file"""
+        try:
+            content_path = Path(__file__).parent.parent / "shared-data" / self.content_file
+            with open(content_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load content file {self.content_file}: {e}")
+            return []
+    
+    def get_concept_by_id(self, concept_id: str) -> Optional[Dict]:
+        """Get a specific concept by its ID"""
+        return next((concept for concept in self.concepts if concept["id"] == concept_id), None)
+    
+    def get_all_concepts(self) -> List[Dict]:
+        """Get all available concepts"""
+        return self.concepts
+    
+    def get_random_concept(self) -> Optional[Dict]:
+        """Get a random concept"""
+        if not self.concepts:
+            return None
+        return random.choice(self.concepts)
+
+
+class TutorAssistant(Agent):
     def __init__(self) -> None:
-        # Initialize order state
-        self.order = OrderState()
+        # Initialize learning state and content manager
+        self.learning_state = LearningState()
+        self.content_manager = TutorContentManager("day4_tutor_content.json")
+        self._current_instructions = self._get_current_instructions()
         
-        def __init__(self) -> None:
-         super().__init__(
-            instructions="""You are a helpful voice AI assistant. The user is interacting with you via voice, even if you perceive the conversation as text.
-            You eagerly assist users with their questions by providing information from your extensive knowledge.
-            Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-            You are curious, friendly, and have a sense of humor.""",
-         )
+        super().__init__(
+            instructions=self._current_instructions,
+        )
 
-    # To add tools, use the @function_tool decorator.
-    # Here's an example that adds a simple weather tool.
-    # You also have to add `from livekit.agents import function_tool, RunContext` to the top of this file
-    # @function_tool
-    # async def lookup_weather(self, context: RunContext, location: str):
-    #     """Use this tool to look up current weather information in the given location.
-    #
-    #     If the location is not supported by the weather service, the tool will indicate this. You must tell the user the location's weather is unavailable.
-    #
-    #     Args:
-    #         location: The location to look up weather information for (e.g. city name)
-    #     """
-    #
-    #     logger.info(f"Looking up weather for {location}")
-    #
-    #     return "sunny with a temperature of 70 degrees."
+    def _get_current_instructions(self) -> str:
+        """Get instructions based on current learning mode"""
+        base_instructions = """You are an active recall learning coach that helps users learn through teaching. The user is interacting with you via voice.
+        Your responses are conversational, encouraging, and without complex formatting or symbols.
+        
+        You have access to function tools to switch learning modes, get concepts, and track progress.
+        When users ask to switch modes or learn concepts, use the appropriate function tools.
+        """
+        
+        if self.learning_state.mode == "learn":
+            return base_instructions + """
+            CURRENT MODE: LEARN - You are Matthew, the Explainer. 
+            Your role is to teach concepts clearly and engagingly.
+            - Explain concepts in simple, understandable terms
+            - Use analogies and examples to make concepts stick
+            - Keep explanations concise but thorough
+            - Ask if the user wants to move to quiz mode after explaining
+            """
+        elif self.learning_state.mode == "quiz":
+            return base_instructions + """
+            CURRENT MODE: QUIZ - You are Alicia, the Quizmaster.
+            Your role is to test the user's understanding.
+            - Ask thoughtful questions about the concept
+            - Give encouraging feedback on answers
+            - Offer hints if the user struggles
+            - Suggest moving to teach-back mode when they're ready
+            """
+        elif self.learning_state.mode == "teach_back":
+            return base_instructions + """
+            CURRENT MODE: TEACH BACK - You are Ken, the Evaluator.
+            Your role is to listen as the user teaches you the concept.
+            - Ask the user to explain the concept back to you
+            - Give constructive feedback on their explanation
+            - Point out what they got right and areas for improvement
+            - Encourage them and suggest which concept to try next
+            """
+        else:
+            return base_instructions + """
+            You are a learning coach ready to help. When users first interact:
+            1. Greet them warmly
+            2. Explain the three available learning modes:
+               - LEARN mode: You'll explain concepts to them (Matthew voice)
+               - QUIZ mode: You'll test their understanding (Alicia voice) 
+               - TEACH BACK mode: They'll teach concepts back to you (Ken voice)
+            3. Ask which mode they'd prefer to start with
+            4. Use the switch_learning_mode function tool when they choose
+            """
+
+    @function_tool
+    async def switch_learning_mode(self, context: RunContext, mode: str, concept_id: str = None):
+        """Switch to a different learning mode and optionally select a concept.
+        
+        Args:
+            mode: The learning mode ("learn", "quiz", "teach_back")
+            concept_id: Optional specific concept to focus on (variables, loops, functions, conditionals, data_types)
+        """
+        logger.info(f"Switching to {mode} mode with concept {concept_id}")
+        
+        # Validate mode
+        valid_modes = ["learn", "quiz", "teach_back"]
+        if mode not in valid_modes:
+            return f"Invalid mode. Please choose from: {', '.join(valid_modes)}"
+        
+        # Set the new mode
+        old_mode = self.learning_state.mode
+        self.learning_state.mode = mode
+        
+        # Select concept
+        if concept_id:
+            concept = self.content_manager.get_concept_by_id(concept_id)
+            if concept:
+                self.learning_state.current_concept = concept_id
+            else:
+                available_concepts = [c["id"] for c in self.content_manager.get_all_concepts()]
+                return f"Concept '{concept_id}' not found. Available concepts: {', '.join(available_concepts)}"
+        elif not self.learning_state.current_concept:
+            # Pick a random concept if none selected
+            concept = self.content_manager.get_random_concept()
+            if concept:
+                self.learning_state.current_concept = concept["id"]
+        
+        # Update our internal instructions reference (for future sessions)
+        self._current_instructions = self._get_current_instructions()
+        
+        # Mode-specific responses
+        current_concept = self.content_manager.get_concept_by_id(self.learning_state.current_concept)
+        concept_title = current_concept["title"] if current_concept else "a concept"
+        
+        if mode == "learn":
+            response = f"Switched to LEARN mode! I'm Matthew, your explainer. Let me teach you about {concept_title}."
+            if current_concept:
+                response += f" {current_concept['summary']} Would you like to move to quiz mode to test your understanding?"
+        elif mode == "quiz":
+            response = f"Switched to QUIZ mode! I'm Alicia, your quizmaster. Let's test your knowledge of {concept_title}!"
+            if current_concept:
+                response += f" {current_concept['sample_question']}"
+        elif mode == "teach_back":
+            response = f"Switched to TEACH BACK mode! I'm Ken, your evaluator. Please explain {concept_title} back to me in your own words. I'll give you feedback on your explanation!"
+        
+        return response
+
+    @function_tool
+    async def get_available_concepts(self, context: RunContext):
+        """Get a list of all available learning concepts."""
+        concepts = self.content_manager.get_all_concepts()
+        concept_list = [f"{concept['id']}: {concept['title']}" for concept in concepts]
+        return f"Available concepts to learn: {', '.join(concept_list)}"
+
+    @function_tool
+    async def get_learning_progress(self, context: RunContext):
+        """Get the user's current learning progress and statistics."""
+        state = self.learning_state
+        progress_info = [
+            f"Current mode: {state.mode or 'Not set'}",
+            f"Current concept: {state.current_concept or 'None selected'}",
+            f"Concepts learned: {len(state.concepts_learned)}",
+            f"Quiz attempts: {len(state.quiz_attempts)}",
+            f"Teach-back sessions: {len(state.teach_back_scores)}"
+        ]
+        return " | ".join(progress_info)
+
+    @function_tool
+    async def provide_feedback(self, context: RunContext, concept_id: str, feedback_type: str, score: str):
+        """Provide feedback for a teach-back session.
+        
+        Args:
+            concept_id: The concept being taught back
+            feedback_type: Type of feedback (good, needs_improvement, excellent)
+            score: Qualitative score or feedback text
+        """
+        if concept_id not in self.learning_state.teach_back_scores:
+            self.learning_state.teach_back_scores[concept_id] = []
+        
+        self.learning_state.teach_back_scores[concept_id].append(f"{feedback_type}: {score}")
+        
+        # Mark concept as learned if feedback is positive
+        if feedback_type in ["good", "excellent"] and concept_id not in self.learning_state.concepts_learned:
+            self.learning_state.concepts_learned.append(concept_id)
+        
+        return f"Feedback recorded for {concept_id}: {feedback_type} - {score}"
 
 
    
@@ -106,50 +239,75 @@ def prewarm(proc: JobProcess):
 
 async def entrypoint(ctx: JobContext):
     # Logging setup
-    # Add any other context you want in all log entries here
     ctx.log_context_fields = {
         "room": ctx.room.name,
     }
 
-    # Set up a voice AI pipeline using OpenAI, Cartesia, AssemblyAI, and the LiveKit turn detector
+    # Create the tutor assistant
+    tutor_assistant = TutorAssistant()
+
+    # Function to get the appropriate voice based on learning mode
+    def get_voice_for_mode(mode: str) -> str:
+        voice_mapping = {
+            "learn": "en-US-matthew",      # Matthew - The Explainer
+            "quiz": "en-US-alicia",       # Alicia - The Quizmaster  
+            "teach_back": "en-US-ken",    # Ken - The Evaluator
+        }
+        return voice_mapping.get(mode, "en-US-matthew")  # Default to Matthew
+
+    # Create initial session with default voice
     session = AgentSession(
-        # Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
-        # See all available models at https://docs.livekit.io/agents/models/stt/
+        # Speech-to-text (STT) 
         stt=deepgram.STT(model="nova-3"),
-        # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
-        # See all available models at https://docs.livekit.io/agents/models/llm/
-        llm=google.LLM(
-                model="gemini-2.5-flash",
-            ),
-        # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
-        # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
+        # Large Language Model (LLM) 
+        llm=google.LLM(model="gemini-2.5-flash"),
+        # Text-to-speech (TTS) - will be updated based on mode
         tts=murf.TTS(
-                voice="en-US-matthew", 
-                style="Conversation",
-                tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
-                text_pacing=True
-            ),
-        # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
-        # See more at https://docs.livekit.io/agents/build/turns
+            voice=get_voice_for_mode(tutor_assistant.learning_state.mode), 
+            style="Conversation",
+            tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
+            text_pacing=True
+        ),
+        # VAD and turn detection
         turn_detection=MultilingualModel(),
         vad=ctx.proc.userdata["vad"],
-        # allow the LLM to generate a response while waiting for the end of turn
-        # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
         preemptive_generation=True,
     )
 
-    # To use a realtime model instead of a voice pipeline, use the following session setup instead.
-    # (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/))
-    # 1. Install livekit-agents[openai]
-    # 2. Set OPENAI_API_KEY in .env.local
-    # 3. Add `from livekit.plugins import openai` to the top of this file
-    # 4. Use the following session setup instead of the version above
-    # session = AgentSession(
-    #     llm=openai.realtime.RealtimeModel(voice="marin")
-    # )
+    # Function to update TTS voice when mode changes
+    async def update_voice_for_mode(new_mode: str):
+        try:
+            new_voice = get_voice_for_mode(new_mode)
+            # Create new TTS with the appropriate voice
+            new_tts = murf.TTS(
+                voice=new_voice,
+                style="Conversation", 
+                tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
+                text_pacing=True
+            )
+            # Update the session's TTS safely
+            if hasattr(session, '_tts') and session._tts:
+                session._tts = new_tts
+                logger.info(f"Switched to voice: {new_voice} for mode: {new_mode}")
+            else:
+                logger.warning(f"Could not update voice to {new_voice}, session TTS not accessible")
+        except Exception as e:
+            logger.error(f"Failed to update voice for mode {new_mode}: {e}")
 
-    # Metrics collection, to measure pipeline performance
-    # For more information, see https://docs.livekit.io/agents/build/metrics/
+    # Override the switch_learning_mode function to also update voice
+    original_switch_mode = tutor_assistant.switch_learning_mode
+
+    async def enhanced_switch_mode(context: RunContext, mode: str, concept_id: str = None):
+        result = await original_switch_mode(context, mode, concept_id)
+        # Only try to update voice if the mode switch was successful
+        if not result.startswith("Invalid mode") and not result.startswith("Concept") and "not found" not in result:
+            await update_voice_for_mode(mode)
+        return result
+
+    # Replace the function tool
+    tutor_assistant.switch_learning_mode = enhanced_switch_mode
+
+    # Metrics collection
     usage_collector = metrics.UsageCollector()
 
     @session.on("metrics_collected")
@@ -163,20 +321,11 @@ async def entrypoint(ctx: JobContext):
 
     ctx.add_shutdown_callback(log_usage)
 
-    # # Add a virtual avatar to the session, if desired
-    # # For other providers, see https://docs.livekit.io/agents/models/avatar/
-    # avatar = hedra.AvatarSession(
-    #   avatar_id="...",  # See https://docs.livekit.io/agents/models/avatar/plugins/hedra
-    # )
-    # # Start the avatar and wait for it to join
-    # await avatar.start(session, room=ctx.room)
-
-    # Start the session, which initializes the voice pipeline and warms up the models
+    # Start the session
     await session.start(
-        agent=Assistant(),
+        agent=tutor_assistant,
         room=ctx.room,
         room_input_options=RoomInputOptions(
-            # For telephony applications, use `BVCTelephony` for best results
             noise_cancellation=noise_cancellation.BVC(),
         ),
     )
