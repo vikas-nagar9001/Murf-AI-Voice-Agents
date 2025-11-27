@@ -1,0 +1,118 @@
+{
+  "company": {
+    "name": "Razorpay",
+    "description": "Razorpay is India's leading payments platform helping businesses of all sizes collect payments online and offline. We offer a complete payment solution including payment gateway, UPI, cards, netbanking, wallets, and business banking.",
+    "founded": "2014",
+    "headquarters": "Bangalore, India",
+    "website": "https://razorpay.com",
+    "target_customers": "Businesses, startups, enterprises, e-commerce companies, SaaS platforms, freelancers"
+  },
+  "products": {
+    "payment_gateway": {
+      "name": "Payment Gateway",
+      "description": "Accept payments online through 100+ payment methods including UPI, cards, netbanking, and wallets",
+      "key_features": ["100+ payment methods", "Real-time settlements", "Advanced fraud detection", "Mobile SDKs", "No-code integration"]
+    },
+    "payment_links": {
+      "name": "Payment Links",
+      "description": "Create and share payment links without any coding. Perfect for invoicing and quick payments",
+      "key_features": ["No-code solution", "Instant sharing via SMS/email/WhatsApp", "Customizable checkout", "Automatic reminders"]
+    },
+    "razorpay_x": {
+      "name": "RazorpayX Business Banking",
+      "description": "Complete business banking solution with current account, expense management, payroll, and vendor payments",
+      "key_features": ["Current account", "Expense management", "Automated payouts", "Tax payments", "Corporate cards"]
+    },
+    "pos": {
+      "name": "POS Solutions",
+      "description": "Accept payments offline through card machines and mobile POS solutions",
+      "key_features": ["Card machines", "Mobile POS", "QR code payments", "Inventory management"]
+    }
+  },
+  "pricing": {
+    "payment_gateway": {
+      "domestic": "2% per transaction (no setup fee, no annual charges)",
+      "international": "3% per transaction",
+      "free_tier": "No free tier, pay per transaction"
+    },
+    "payment_links": {
+      "domestic": "2% per successful payment",
+      "free_features": "Unlimited payment links creation, basic customization"
+    },
+    "razorpay_x": {
+      "current_account": "₹0 account opening, ₹10,000 minimum balance",
+      "transaction_fees": "₹5 per payout (first 100 payouts free monthly)"
+    }
+  },
+  "faq": [
+    {
+      "question": "What does Razorpay do?",
+      "answer": "Razorpay is a payments platform that helps businesses accept payments online and offline. We provide payment gateway, UPI, cards, netbanking, business banking, and complete financial solutions for businesses of all sizes."
+    },
+    {
+      "question": "Do you have a free tier?",
+      "answer": "We don't have a traditional free tier, but we operate on a pay-per-transaction model with no setup fees or annual charges. You only pay when you receive payments - 2% for domestic transactions."
+    },
+    {
+      "question": "Who is this for?",
+      "answer": "Razorpay is perfect for any business that needs to accept payments - from small startups and freelancers to large enterprises. This includes e-commerce companies, SaaS platforms, service providers, restaurants, retail stores, and any business selling online or offline."
+    },
+    {
+      "question": "What payment methods do you support?",
+      "answer": "We support 100+ payment methods including UPI (Google Pay, PhonePe, Paytm), all major credit and debit cards, netbanking from 58+ banks, wallets like Paytm, Amazon Pay, and international cards for global payments."
+    },
+    {
+      "question": "How quickly do I get my money?",
+      "answer": "We offer instant settlements for verified businesses. Typically, settlements happen within 2-3 business days, but with our instant settlement feature, you can get your money in real-time for a small additional fee."
+    },
+    {
+      "question": "Is it safe and secure?",
+      "answer": "Absolutely! We're PCI DSS Level 1 compliant and use bank-level security with 256-bit SSL encryption. We also have advanced fraud detection and prevention systems to protect both you and your customers."
+    },
+    {
+      "question": "How do I integrate Razorpay?",
+      "answer": "We offer multiple integration options: simple payment links (no coding required), API integration for developers, plugins for popular platforms like Shopify, WooCommerce, Magento, and mobile SDKs for apps."
+    },
+    {
+      "question": "What are your transaction fees?",
+      "answer": "Our pricing is transparent: 2% per domestic transaction and 3% for international transactions. No setup fees, no annual charges, no hidden costs. You only pay when you receive payments."
+    },
+    {
+      "question": "Do you offer business banking services?",
+      "answer": "Yes! RazorpayX offers complete business banking including current accounts, automated payouts, expense management, vendor payments, payroll processing, and corporate cards - all integrated with our payments platform."
+    },
+    {
+      "question": "Can I accept international payments?",
+      "answer": "Yes, we support international cards and payments. You can accept payments from customers worldwide with automatic currency conversion and competitive forex rates at 3% per transaction."
+    },
+    {
+      "question": "What kind of support do you provide?",
+      "answer": "We provide 24/7 customer support through phone, email, and chat. We also offer dedicated relationship managers for enterprise clients, detailed documentation, and integration support from our technical team."
+    },
+    {
+      "question": "How long does the onboarding take?",
+      "answer": "Onboarding typically takes 2-3 business days after document submission. For simple payment links, you can start accepting payments immediately. Full KYC verification is required for settlements and advanced features."
+    }
+  ],
+  "lead_qualification": {
+    "ideal_customers": [
+      "E-commerce businesses",
+      "SaaS platforms",
+      "Digital service providers",
+      "Restaurants and food delivery",
+      "Subscription-based businesses",
+      "Freelancers and consultants",
+      "Educational platforms",
+      "Healthcare providers",
+      "Travel and booking platforms"
+    ],
+    "key_indicators": [
+      "Currently accepting payments",
+      "Looking to expand payment options",
+      "Facing settlement delays",
+      "Need business banking solutions",
+      "Want to reduce payment failures",
+      "Looking for payment analytics"
+    ]
+  }
+}

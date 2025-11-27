@@ -27,76 +27,237 @@ logger = logging.getLogger("agent")
 load_dotenv(".env.local")
 
 
-class OrderState:
-    """Manages the current coffee order state"""
+class LeadData:
+    """Manages the current lead information"""
     def __init__(self):
-        self.drink_type: Optional[str] = None
-        self.size: Optional[str] = None
-        self.milk: Optional[str] = None
-        self.extras: List[str] = []
         self.name: Optional[str] = None
+        self.company: Optional[str] = None
+        self.email: Optional[str] = None
+        self.role: Optional[str] = None
+        self.use_case: Optional[str] = None
+        self.team_size: Optional[str] = None
+        self.timeline: Optional[str] = None
     
     def to_dict(self) -> Dict:
         return {
-            "drinkType": self.drink_type,
-            "size": self.size,
-            "milk": self.milk,
-            "extras": self.extras,
-            "name": self.name
+            "name": self.name,
+            "company": self.company,
+            "email": self.email,
+            "role": self.role,
+            "use_case": self.use_case,
+            "team_size": self.team_size,
+            "timeline": self.timeline,
+            "collected_at": datetime.now().isoformat()
         }
     
-    def is_complete(self) -> bool:
-        """Check if all required fields are filled"""
-        return all([
-            self.drink_type is not None,
-            self.size is not None,
-            self.milk is not None,
-            self.name is not None
-        ])
-    
-    def get_missing_fields(self) -> List[str]:
-        """Get list of missing required fields"""
-        missing = []
-        if not self.drink_type:
-            missing.append("drink type")
-        if not self.size:
-            missing.append("size")
-        if not self.milk:
-            missing.append("milk preference")
-        if not self.name:
-            missing.append("name for the order")
-        return missing
+    def get_collected_fields(self) -> List[str]:
+        """Get list of fields that have been collected"""
+        collected = []
+        if self.name: collected.append("name")
+        if self.company: collected.append("company")
+        if self.email: collected.append("email")
+        if self.role: collected.append("role")
+        if self.use_case: collected.append("use case")
+        if self.team_size: collected.append("team size")
+        if self.timeline: collected.append("timeline")
+        return collected
 
 
 class Assistant(Agent):
     def __init__(self) -> None:
-        # Initialize order state
-        self.order = OrderState()
+        # Load company data
+        self.company_data = self._load_company_data()
         
-        def __init__(self) -> None:
-           super().__init__(
-            instructions="""You are a helpful voice AI assistant. The user is interacting with you via voice, even if you perceive the conversation as text.
-            You eagerly assist users with their questions by providing information from your extensive knowledge.
-            Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-            You are curious, friendly, and have a sense of humor.""",
-           )
+        # Initialize lead state
+        self.lead = LeadData()
+        self.conversation_stage = "greeting"  # greeting, qualifying, collecting_info, closing
+        
+        super().__init__(
+            instructions=f"""You are Priya, a friendly and professional Sales Development Representative (SDR) for Razorpay, India's leading payments platform. 
 
-    # To add tools, use the @function_tool decorator.
-    # Here's an example that adds a simple weather tool.
-    # You also have to add `from livekit.agents import function_tool, RunContext` to the top of this file
-    # @function_tool
-    # async def lookup_weather(self, context: RunContext, location: str):
-    #     """Use this tool to look up current weather information in the given location.
-    #
-    #     If the location is not supported by the weather service, the tool will indicate this. You must tell the user the location's weather is unavailable.
-    #
-    #     Args:
-    #         location: The location to look up weather information for (e.g. city name)
-    #     """
-    #
-    #     logger.info(f"Looking up weather for {location}")
-    #
-    #     return "sunny with a temperature of 70 degrees."
+Your role is to:
+1. Greet visitors warmly and ask what brought them here
+2. Understand their business needs and payment challenges
+3. Answer questions about Razorpay using the company knowledge you have
+4. Naturally collect lead information during the conversation
+5. Provide value and build trust before asking for contact details
+
+Key guidelines:
+- Be conversational, helpful, and professional
+- Ask one question at a time to avoid overwhelming the prospect
+- Listen actively and respond to their specific needs
+- Use the FAQ knowledge to answer product questions accurately
+- Don't make up information not in the company data
+- Naturally weave in lead qualification questions during the conversation
+- Keep responses concise and avoid complex formatting
+- When you sense the conversation is ending, provide a summary
+
+Company: {self.company_data['company']['name']}
+What we do: {self.company_data['company']['description']}
+
+Your responses should be natural, conversational, and focused on understanding the prospect's business needs."""
+        )
+    
+    
+    def _search_faq(self, query: str) -> Optional[str]:
+        """Search FAQ for relevant answers using keyword matching"""
+        query_lower = query.lower()
+        
+        # Keywords for different topics
+        keyword_matches = {
+            "what": ["what does", "what do you", "what is"],
+            "pricing": ["price", "cost", "fee", "charge", "pricing", "how much"],
+            "free": ["free", "trial", "no cost"],
+            "who": ["who is this for", "target", "customer"],
+            "payment methods": ["payment method", "upi", "card", "netbanking", "wallet"],
+            "settlement": ["money", "settlement", "payout", "receive"],
+            "security": ["safe", "secure", "security", "fraud"],
+            "integration": ["integrate", "setup", "install", "api"],
+            "support": ["support", "help", "customer service"],
+            "international": ["international", "global", "foreign", "worldwide"],
+            "banking": ["business banking", "razorpayx", "current account"],
+            "onboarding": ["onboard", "setup time", "how long"]
+        }
+        
+        # Find matching FAQs
+        for faq in self.company_data.get("faq", []):
+            question_lower = faq["question"].lower()
+            answer_lower = faq["answer"].lower()
+            
+            # Check if query matches question or if keywords match
+            if query_lower in question_lower or question_lower in query_lower:
+                return faq["answer"]
+            
+            # Check keyword matches
+            for topic, keywords in keyword_matches.items():
+                if any(keyword in query_lower for keyword in keywords):
+                    if topic == "what" and any(word in question_lower for word in ["what does", "what is"]):
+                        return faq["answer"]
+                    elif topic in question_lower or topic in answer_lower:
+                        return faq["answer"]
+        
+        return None
+    
+    def _save_lead_data(self):
+        """Save lead data to JSON file"""
+        try:
+            leads_dir = "leads"
+            if not os.path.exists(leads_dir):
+                os.makedirs(leads_dir)
+            
+            filename = f"{leads_dir}/lead_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(filename, "w") as f:
+                json.dump(self.lead.to_dict(), f, indent=2)
+            
+            logger.info(f"Lead data saved to {filename}")
+            return filename
+        except Exception as e:
+            logger.error(f"Failed to save lead data: {e}")
+            return None
+
+    @function_tool
+    async def answer_product_question(self, context: RunContext, question: str):
+        """Use this tool to answer questions about Razorpay's products, pricing, or services.
+        
+        This tool searches the FAQ database for relevant information to answer user questions
+        about what Razorpay does, pricing, features, integrations, etc.
+        
+        Args:
+            question: The user's question about Razorpay's products or services
+        """
+        
+        logger.info(f"Searching FAQ for: {question}")
+        
+        answer = self._search_faq(question)
+        
+        if answer:
+            return f"Based on our company information: {answer}"
+        else:
+            return "I don't have specific information about that in my knowledge base. Let me connect you with someone who can provide more detailed information. Could you share your email so we can follow up with you?"
+
+    @function_tool
+    async def collect_lead_info(self, context: RunContext, field: str, value: str):
+        """Use this tool to store lead information as you collect it during the conversation.
+        
+        Call this tool whenever the user provides information about themselves or their business
+        that would be valuable for follow-up.
+        
+        Args:
+            field: The type of information being collected (name, company, email, role, use_case, team_size, timeline)
+            value: The information provided by the user
+        """
+        
+        logger.info(f"Collecting lead info - {field}: {value}")
+        
+        field_lower = field.lower()
+        
+        if "name" in field_lower:
+            self.lead.name = value
+        elif "company" in field_lower or "business" in field_lower:
+            self.lead.company = value
+        elif "email" in field_lower:
+            self.lead.email = value
+        elif "role" in field_lower or "position" in field_lower or "title" in field_lower:
+            self.lead.role = value
+        elif "use" in field_lower or "case" in field_lower or "need" in field_lower:
+            self.lead.use_case = value
+        elif "team" in field_lower or "size" in field_lower:
+            self.lead.team_size = value
+        elif "time" in field_lower or "timeline" in field_lower or "when" in field_lower:
+            self.lead.timeline = value
+        
+        collected_fields = self.lead.get_collected_fields()
+        return f"Got it! I've noted down your {field}. So far I have: {', '.join(collected_fields)}"
+
+    @function_tool
+    async def generate_call_summary(self, context: RunContext):
+        """Use this tool when the conversation is ending to create a summary and save the lead data.
+        
+        Call this when the user indicates they're done, says goodbye, or asks to end the conversation.
+        This will create both a verbal summary and save the collected lead information to a file.
+        """
+        
+        logger.info("Generating call summary and saving lead data")
+        
+        # Save lead data to file
+        filename = self._save_lead_data()
+        
+        # Create summary
+        collected_fields = self.lead.get_collected_fields()
+        
+        if collected_fields:
+            summary = f"Perfect! Let me summarize what we discussed today. "
+            
+            if self.lead.name:
+                summary += f"I spoke with {self.lead.name}"
+                if self.lead.company:
+                    summary += f" from {self.lead.company}"
+                summary += ". "
+            
+            if self.lead.use_case:
+                summary += f"You're looking to {self.lead.use_case}. "
+            
+            if self.lead.timeline:
+                summary += f"Your timeline is {self.lead.timeline}. "
+            
+            if self.lead.team_size:
+                summary += f"You mentioned working with a team of {self.lead.team_size}. "
+            
+            summary += f"I've saved all your information and someone from our team will follow up with you soon. Thank you for your time today!"
+            
+        else:
+            summary = "Thank you for learning about Razorpay today! Even though we didn't collect detailed contact information, I hope our conversation was helpful. Feel free to reach out anytime if you have more questions about our payment solutions."
+        
+        return summary
+
+    def _load_company_data(self) -> Dict:
+        """Load company data from JSON file"""
+        try:
+            with open("src/company_data.json", "r") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load company data: {e}")
+            return {}
 
 
 def prewarm(proc: JobProcess):
@@ -110,45 +271,29 @@ async def entrypoint(ctx: JobContext):
         "room": ctx.room.name,
     }
 
-    # Set up a voice AI pipeline using OpenAI, Cartesia, AssemblyAI, and the LiveKit turn detector
+    # Set up a voice AI pipeline optimized for SDR conversations
     session = AgentSession(
-        # Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
-        # See all available models at https://docs.livekit.io/agents/models/stt/
+        # Speech-to-text (STT) - using Deepgram for accurate transcription
         stt=deepgram.STT(model="nova-3"),
-        # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
-        # See all available models at https://docs.livekit.io/agents/models/llm/
+        # Large Language Model (LLM) - using Google Gemini for intelligent responses
         llm=google.LLM(
                 model="gemini-2.5-flash",
             ),
-        # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
-        # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
+        # Text-to-speech (TTS) - using Murf with Indian English voice for authenticity
         tts=murf.TTS(
-                voice="en-US-matthew", 
+                voice="en-IN-priya", 
                 style="Conversation",
                 tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
                 text_pacing=True
             ),
-        # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
-        # See more at https://docs.livekit.io/agents/build/turns
+        # VAD and turn detection for smooth conversation flow
         turn_detection=MultilingualModel(),
         vad=ctx.proc.userdata["vad"],
-        # allow the LLM to generate a response while waiting for the end of turn
-        # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
+        # Allow LLM to generate responses while waiting for end of turn for natural conversation
         preemptive_generation=True,
     )
 
-    # To use a realtime model instead of a voice pipeline, use the following session setup instead.
-    # (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/))
-    # 1. Install livekit-agents[openai]
-    # 2. Set OPENAI_API_KEY in .env.local
-    # 3. Add `from livekit.plugins import openai` to the top of this file
-    # 4. Use the following session setup instead of the version above
-    # session = AgentSession(
-    #     llm=openai.realtime.RealtimeModel(voice="marin")
-    # )
-
-    # Metrics collection, to measure pipeline performance
-    # For more information, see https://docs.livekit.io/agents/build/metrics/
+    # Metrics collection for performance monitoring
     usage_collector = metrics.UsageCollector()
 
     @session.on("metrics_collected")
@@ -162,20 +307,11 @@ async def entrypoint(ctx: JobContext):
 
     ctx.add_shutdown_callback(log_usage)
 
-    # # Add a virtual avatar to the session, if desired
-    # # For other providers, see https://docs.livekit.io/agents/models/avatar/
-    # avatar = hedra.AvatarSession(
-    #   avatar_id="...",  # See https://docs.livekit.io/agents/models/avatar/plugins/hedra
-    # )
-    # # Start the avatar and wait for it to join
-    # await avatar.start(session, room=ctx.room)
-
-    # Start the session, which initializes the voice pipeline and warms up the models
+    # Start the session with our SDR Assistant
     await session.start(
         agent=Assistant(),
         room=ctx.room,
         room_input_options=RoomInputOptions(
-            # For telephony applications, use `BVCTelephony` for best results
             noise_cancellation=noise_cancellation.BVC(),
         ),
     )
