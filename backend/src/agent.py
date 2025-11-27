@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
+from fraud_database import FraudDatabase
 from livekit.agents import (
     Agent,
     AgentSession,
@@ -19,7 +20,7 @@ from livekit.agents import (
     function_tool,
     RunContext
 )
-from livekit.plugins import murf, silero, google, deepgram, noise_cancellation
+from livekit.plugins import murf, silero, deepgram, noise_cancellation, openai
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 logger = logging.getLogger("agent")
@@ -27,76 +28,181 @@ logger = logging.getLogger("agent")
 load_dotenv(".env.local")
 
 
-class OrderState:
-    """Manages the current coffee order state"""
+class FraudCaseState:
+    """Manages the current fraud case state"""
     def __init__(self):
-        self.drink_type: Optional[str] = None
-        self.size: Optional[str] = None
-        self.milk: Optional[str] = None
-        self.extras: List[str] = []
-        self.name: Optional[str] = None
-    
-    def to_dict(self) -> Dict:
-        return {
-            "drinkType": self.drink_type,
-            "size": self.size,
-            "milk": self.milk,
-            "extras": self.extras,
-            "name": self.name
-        }
-    
+        self.current_case: Optional[Dict] = None
+        self.username: Optional[str] = None
+        self.verification_passed: bool = False
+        self.transaction_confirmed: Optional[bool] = None
+        self.call_complete: bool = False
+        
+    def set_case(self, case: Dict):
+        """Set the current fraud case"""
+        self.current_case = case
+        self.username = case.get('user_name')
+        
+    def is_verified(self) -> bool:
+        """Check if customer verification has passed"""
+        return self.verification_passed
+        
     def is_complete(self) -> bool:
-        """Check if all required fields are filled"""
-        return all([
-            self.drink_type is not None,
-            self.size is not None,
-            self.milk is not None,
-            self.name is not None
-        ])
-    
-    def get_missing_fields(self) -> List[str]:
-        """Get list of missing required fields"""
-        missing = []
-        if not self.drink_type:
-            missing.append("drink type")
-        if not self.size:
-            missing.append("size")
-        if not self.milk:
-            missing.append("milk preference")
-        if not self.name:
-            missing.append("name for the order")
-        return missing
+        """Check if the fraud investigation is complete"""
+        return self.call_complete
+        
+    def get_transaction_summary(self) -> str:
+        """Get a formatted summary of the suspicious transaction"""
+        if not self.current_case:
+            return "No transaction data available"
+            
+        case = self.current_case
+        return f"""A transaction of ${case['transaction_amount']} at {case['transaction_name']} from {case['transaction_source']} in {case['transaction_location']} on {case['transaction_time']} using your card ending in {case['card_ending']}"""
 
 
 class Assistant(Agent):
     def __init__(self) -> None:
-        # Initialize order state
-        self.order = OrderState()
+        # Initialize fraud case state and database
+        self.fraud_state = FraudCaseState()
+        self.fraud_db = FraudDatabase()
         
-        def __init__(self) -> None:
-           super().__init__(
-            instructions="""You are a helpful voice AI assistant. The user is interacting with you via voice, even if you perceive the conversation as text.
-            You eagerly assist users with their questions by providing information from your extensive knowledge.
-            Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-            You are curious, friendly, and have a sense of humor.""",
-           )
+        super().__init__(
+            instructions="""You are a professional fraud detection representative for SecureBank. You are calling customers about suspicious transactions on their accounts.
+            
+            Your role:
+            - Introduce yourself as calling from SecureBank's fraud department
+            - Verify the customer's identity using security questions
+            - Read out suspicious transaction details
+            - Ask if they made the transaction
+            - Take appropriate action based on their response
+            
+            Your tone should be:
+            - Professional and reassuring
+            - Clear and easy to understand
+            - Calm and helpful
+            - Never ask for sensitive information like full card numbers or PINs
+            
+            The user is interacting with you via voice, so keep responses concise and conversational without complex formatting.""",
+        )
 
-    # To add tools, use the @function_tool decorator.
-    # Here's an example that adds a simple weather tool.
-    # You also have to add `from livekit.agents import function_tool, RunContext` to the top of this file
-    # @function_tool
-    # async def lookup_weather(self, context: RunContext, location: str):
-    #     """Use this tool to look up current weather information in the given location.
-    #
-    #     If the location is not supported by the weather service, the tool will indicate this. You must tell the user the location's weather is unavailable.
-    #
-    #     Args:
-    #         location: The location to look up weather information for (e.g. city name)
-    #     """
-    #
-    #     logger.info(f"Looking up weather for {location}")
-    #
-    #     return "sunny with a temperature of 70 degrees."
+    @function_tool
+    async def get_security_question(self, context: RunContext):
+        """Get the security question for the current customer to verify their identity.
+        
+        Use this after loading a fraud case to ask the customer their security question.
+        """
+        if not self.fraud_state.current_case:
+            return "No fraud case loaded. Please ask for the customer's name first."
+            
+        question = self.fraud_state.current_case['security_question']
+        logger.info(f"Asking security question: {question}")
+        return f"For security purposes, I need to verify your identity. {question}"
+    
+    @function_tool
+    async def get_transaction_details(self, context: RunContext):
+        """Get the details of the suspicious transaction to read to the customer.
+        
+        Use this after customer verification passes to provide transaction details.
+        """
+        if not self.fraud_state.current_case:
+            return "No fraud case available."
+            
+        if not self.fraud_state.verification_passed:
+            return "Customer identity must be verified before sharing transaction details."
+            
+        summary = self.fraud_state.get_transaction_summary()
+        logger.info("Providing transaction details to verified customer")
+        return f"Here are the details of the suspicious transaction: {summary}"
+
+    @function_tool
+    async def load_fraud_case(self, context: RunContext, username: str):
+        """Load a pending fraud case for the specified username.
+        
+        Use this when the customer provides their name to look up their fraud case.
+        
+        Args:
+            username: The customer's name to search for fraud cases
+        """
+        logger.info(f"Loading fraud case for username: {username}")
+        
+        case = self.fraud_db.get_fraud_case_by_username(username)
+        
+        if case:
+            self.fraud_state.set_case(case)
+            logger.info(f"Loaded fraud case ID {case['id']} for {username}")
+            return f"Found a fraud alert for {username}. I can see a suspicious transaction on your account."
+        else:
+            logger.info(f"No pending fraud cases found for {username}")
+            return f"I don't see any pending fraud alerts for {username}. You may have the wrong department."
+    
+    @function_tool
+    async def verify_customer(self, context: RunContext, security_answer: str):
+        """Verify the customer's identity using their security answer.
+        
+        Use this after asking the customer their security question to verify their identity.
+        
+        Args:
+            security_answer: The customer's answer to the security question
+        """
+        if not self.fraud_state.current_case:
+            return "No fraud case loaded. Please provide your name first."
+            
+        expected_answer = self.fraud_state.current_case['security_answer'].lower()
+        provided_answer = security_answer.lower().strip()
+        
+        logger.info(f"Verifying customer identity")
+        
+        if expected_answer == provided_answer:
+            self.fraud_state.verification_passed = True
+            logger.info("Customer verification passed")
+            return "Thank you for verifying your identity. Now let me tell you about the suspicious transaction."
+        else:
+            logger.info("Customer verification failed")
+            return "I'm sorry, but that answer doesn't match our records. For your security, I cannot proceed with this call."
+    
+    @function_tool
+    async def confirm_transaction(self, context: RunContext, user_made_transaction: bool):
+        """Record whether the customer confirmed or denied making the suspicious transaction.
+        
+        Use this after the customer responds yes or no to whether they made the transaction.
+        
+        Args:
+            user_made_transaction: True if customer confirmed they made the transaction, False if they denied it
+        """
+        if not self.fraud_state.current_case or not self.fraud_state.verification_passed:
+            return "Cannot process transaction confirmation. Customer must be verified first."
+            
+        case = self.fraud_state.current_case
+        self.fraud_state.transaction_confirmed = user_made_transaction
+        
+        if user_made_transaction:
+            # Customer confirmed the transaction is legitimate
+            success = self.fraud_db.update_case_status(
+                case['id'], 
+                'confirmed_safe',
+                'Customer confirmed transaction as legitimate'
+            )
+            self.fraud_state.call_complete = True
+            
+            if success:
+                logger.info(f"Case {case['id']} marked as safe")
+                return "Perfect! I've updated your account to show this transaction is legitimate. No further action is needed. Thank you for your time."
+            else:
+                return "I've noted that you confirmed the transaction, though there was a technical issue updating our records. Your account is safe."
+                
+        else:
+            # Customer denied making the transaction - it's fraud
+            success = self.fraud_db.update_case_status(
+                case['id'], 
+                'confirmed_fraud',
+                'Customer denied making transaction - card blocked and dispute initiated'
+            )
+            self.fraud_state.call_complete = True
+            
+            if success:
+                logger.info(f"Case {case['id']} marked as fraud")
+                return f"I understand this transaction is fraudulent. I've immediately blocked your card ending in {case['card_ending']} and initiated a dispute. You'll receive a new card within 3-5 business days. Is there anything else I can help you with regarding this matter?"
+            else:
+                return "I've noted this as a fraudulent transaction. Your card will be blocked shortly and a dispute will be initiated."
 
 
 def prewarm(proc: JobProcess):
@@ -117,8 +223,8 @@ async def entrypoint(ctx: JobContext):
         stt=deepgram.STT(model="nova-3"),
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
-        llm=google.LLM(
-                model="gemini-2.5-flash",
+        llm=openai.LLM(
+                model="gpt-4o-mini",
             ),
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/

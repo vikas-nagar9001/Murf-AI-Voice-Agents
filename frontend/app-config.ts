@@ -20,9 +20,9 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'LiveKit',
-  pageTitle: 'LiveKit Voice Agent',
-  pageDescription: 'A voice agent built with LiveKit',
+  companyName: 'SecureBank',
+  pageTitle: 'SecureBank Fraud Alert System',
+  pageDescription: 'Fraud detection voice agent for suspicious transaction alerts',
 
   supportsChatInput: true,
   supportsVideoInput: true,
@@ -33,7 +33,7 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   accent: '#002cf2',
   logoDark: '/lk-logo-dark.svg',
   accentDark: '#1fd5f9',
-  startButtonText: 'Start call',
+  startButtonText: 'Connect to Fraud Department',
 
   // for LiveKit Cloud Sandbox
   sandboxId: undefined,
