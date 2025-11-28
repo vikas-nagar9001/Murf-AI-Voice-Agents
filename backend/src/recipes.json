@@ -1,0 +1,108 @@
+{
+  "recipes": {
+    "peanut_butter_sandwich": {
+      "name": "Peanut Butter Sandwich",
+      "description": "Classic peanut butter sandwich",
+      "ingredients": [
+        {"item_id": "bread-white", "quantity": 1, "note": "or whole wheat"},
+        {"item_id": "peanut-butter", "quantity": 1}
+      ],
+      "aliases": ["pb sandwich", "peanut butter bread"]
+    },
+    "pbj_sandwich": {
+      "name": "PB&J Sandwich",
+      "description": "Peanut butter and jelly sandwich",
+      "ingredients": [
+        {"item_id": "bread-white", "quantity": 1, "note": "or whole wheat"},
+        {"item_id": "peanut-butter", "quantity": 1},
+        {"item_id": "jelly-grape", "quantity": 1}
+      ],
+      "aliases": ["pb and j", "peanut butter jelly sandwich", "peanut butter and jelly"]
+    },
+    "spaghetti": {
+      "name": "Spaghetti with Marinara",
+      "description": "Classic spaghetti pasta with marinara sauce",
+      "ingredients": [
+        {"item_id": "pasta-spaghetti", "quantity": 1},
+        {"item_id": "pasta-sauce", "quantity": 1},
+        {"item_id": "olive-oil", "quantity": 1},
+        {"item_id": "garlic", "quantity": 1}
+      ],
+      "aliases": ["pasta", "spaghetti dinner", "pasta dinner", "italian pasta"]
+    },
+    "grilled_cheese": {
+      "name": "Grilled Cheese Sandwich",
+      "description": "Classic grilled cheese sandwich",
+      "ingredients": [
+        {"item_id": "bread-white", "quantity": 1},
+        {"item_id": "cheese-cheddar", "quantity": 1},
+        {"item_id": "butter", "quantity": 1}
+      ],
+      "aliases": ["cheese sandwich", "toasted cheese"]
+    },
+    "breakfast": {
+      "name": "Classic Breakfast",
+      "description": "Eggs, toast, and orange juice",
+      "ingredients": [
+        {"item_id": "eggs-dozen", "quantity": 1},
+        {"item_id": "bread-white", "quantity": 1},
+        {"item_id": "butter", "quantity": 1},
+        {"item_id": "juice-orange", "quantity": 1}
+      ],
+      "aliases": ["morning breakfast", "breakfast meal", "eggs and toast"]
+    },
+    "salad": {
+      "name": "Fresh Garden Salad",
+      "description": "Simple fresh salad with lettuce and tomatoes",
+      "ingredients": [
+        {"item_id": "lettuce", "quantity": 1},
+        {"item_id": "tomatoes", "quantity": 1},
+        {"item_id": "olive-oil", "quantity": 1}
+      ],
+      "aliases": ["garden salad", "green salad", "simple salad"]
+    },
+    "bruschetta": {
+      "name": "Bruschetta",
+      "description": "Italian appetizer with tomatoes on toasted bread",
+      "ingredients": [
+        {"item_id": "bread-white", "quantity": 1},
+        {"item_id": "tomatoes", "quantity": 1},
+        {"item_id": "garlic", "quantity": 1},
+        {"item_id": "olive-oil", "quantity": 1}
+      ],
+      "aliases": ["tomato bread", "italian appetizer"]
+    },
+    "coffee_and_breakfast": {
+      "name": "Coffee Breakfast",
+      "description": "Coffee with toast and butter",
+      "ingredients": [
+        {"item_id": "coffee-ground", "quantity": 1},
+        {"item_id": "bread-wheat", "quantity": 1},
+        {"item_id": "butter", "quantity": 1},
+        {"item_id": "milk-whole", "quantity": 1}
+      ],
+      "aliases": ["morning coffee", "coffee breakfast"]
+    },
+    "movie_night_snacks": {
+      "name": "Movie Night Snacks",
+      "description": "Perfect snacks for movie night",
+      "ingredients": [
+        {"item_id": "popcorn", "quantity": 1},
+        {"item_id": "chips-classic", "quantity": 1},
+        {"item_id": "soda-cola", "quantity": 2},
+        {"item_id": "cookies-chocolate", "quantity": 1}
+      ],
+      "aliases": ["movie snacks", "snacks for movie", "cinema snacks"]
+    },
+    "healthy_snack_pack": {
+      "name": "Healthy Snack Pack",
+      "description": "Nutritious snacks for the day",
+      "ingredients": [
+        {"item_id": "granola-bars", "quantity": 1},
+        {"item_id": "trail-mix", "quantity": 1},
+        {"item_id": "water-bottle", "quantity": 2}
+      ],
+      "aliases": ["healthy snacks", "nutritious snacks", "gym snacks"]
+    }
+  }
+}

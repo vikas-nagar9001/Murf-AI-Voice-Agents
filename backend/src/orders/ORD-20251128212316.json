@@ -1,0 +1,26 @@
+{
+  "order_id": "ORD-20251128212316",
+  "timestamp": "2025-11-28T21:23:16.473630",
+  "customer_name": "Guest",
+  "customer_address": null,
+  "items": [
+    {
+      "item_id": "milk-whole",
+      "name": "Whole Milk",
+      "price": 3.79,
+      "quantity": 1,
+      "notes": "",
+      "subtotal": 3.79
+    },
+    {
+      "item_id": "popcorn",
+      "name": "Butter Popcorn",
+      "price": 3.49,
+      "quantity": 1,
+      "notes": "",
+      "subtotal": 3.49
+    }
+  ],
+  "total": 7.28,
+  "status": "placed"
+}

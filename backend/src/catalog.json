@@ -1,0 +1,276 @@
+{
+  "catalog": {
+    "groceries": [
+      {
+        "id": "bread-white",
+        "name": "White Bread",
+        "category": "groceries",
+        "price": 2.99,
+        "brand": "FreshBake",
+        "size": "1 loaf",
+        "tags": ["bakery", "staple"]
+      },
+      {
+        "id": "bread-wheat",
+        "name": "Whole Wheat Bread",
+        "category": "groceries",
+        "price": 3.49,
+        "brand": "FreshBake",
+        "size": "1 loaf",
+        "tags": ["bakery", "staple", "healthy"]
+      },
+      {
+        "id": "eggs-dozen",
+        "name": "Farm Fresh Eggs",
+        "category": "groceries",
+        "price": 4.99,
+        "brand": "Happy Hens",
+        "size": "12 count",
+        "tags": ["dairy", "protein", "breakfast"]
+      },
+      {
+        "id": "milk-whole",
+        "name": "Whole Milk",
+        "category": "groceries",
+        "price": 3.79,
+        "brand": "DairyFarm",
+        "size": "1 gallon",
+        "tags": ["dairy", "staple"]
+      },
+      {
+        "id": "butter",
+        "name": "Unsalted Butter",
+        "category": "groceries",
+        "price": 4.49,
+        "brand": "DairyFarm",
+        "size": "1 lb",
+        "tags": ["dairy", "cooking"]
+      },
+      {
+        "id": "cheese-cheddar",
+        "name": "Cheddar Cheese",
+        "category": "groceries",
+        "price": 5.99,
+        "brand": "CheeseWorks",
+        "size": "8 oz",
+        "tags": ["dairy", "cheese"]
+      },
+      {
+        "id": "peanut-butter",
+        "name": "Creamy Peanut Butter",
+        "category": "groceries",
+        "price": 4.29,
+        "brand": "NuttyDelight",
+        "size": "16 oz",
+        "tags": ["spread", "protein"]
+      },
+      {
+        "id": "jelly-grape",
+        "name": "Grape Jelly",
+        "category": "groceries",
+        "price": 3.29,
+        "brand": "FruitSpread",
+        "size": "18 oz",
+        "tags": ["spread", "sweet"]
+      },
+      {
+        "id": "pasta-spaghetti",
+        "name": "Spaghetti Pasta",
+        "category": "groceries",
+        "price": 1.99,
+        "brand": "ItalianKitchen",
+        "size": "1 lb",
+        "tags": ["pasta", "staple"]
+      },
+      {
+        "id": "pasta-sauce",
+        "name": "Marinara Sauce",
+        "category": "groceries",
+        "price": 3.99,
+        "brand": "ItalianKitchen",
+        "size": "24 oz",
+        "tags": ["sauce", "pasta"]
+      },
+      {
+        "id": "olive-oil",
+        "name": "Extra Virgin Olive Oil",
+        "category": "groceries",
+        "price": 8.99,
+        "brand": "MediterraneanGold",
+        "size": "16 oz",
+        "tags": ["cooking", "healthy"]
+      },
+      {
+        "id": "tomatoes",
+        "name": "Fresh Tomatoes",
+        "category": "groceries",
+        "price": 2.49,
+        "brand": "FarmFresh",
+        "size": "1 lb",
+        "tags": ["produce", "vegetable"]
+      },
+      {
+        "id": "lettuce",
+        "name": "Romaine Lettuce",
+        "category": "groceries",
+        "price": 2.29,
+        "brand": "FarmFresh",
+        "size": "1 head",
+        "tags": ["produce", "vegetable", "salad"]
+      },
+      {
+        "id": "onions",
+        "name": "Yellow Onions",
+        "category": "groceries",
+        "price": 1.49,
+        "brand": "FarmFresh",
+        "size": "2 lb bag",
+        "tags": ["produce", "vegetable", "cooking"]
+      },
+      {
+        "id": "garlic",
+        "name": "Fresh Garlic",
+        "category": "groceries",
+        "price": 0.99,
+        "brand": "FarmFresh",
+        "size": "1 head",
+        "tags": ["produce", "vegetable", "cooking"]
+      }
+    ],
+    "snacks": [
+      {
+        "id": "chips-classic",
+        "name": "Classic Potato Chips",
+        "category": "snacks",
+        "price": 3.99,
+        "brand": "CrunchyBites",
+        "size": "10 oz",
+        "tags": ["salty", "crispy"]
+      },
+      {
+        "id": "cookies-chocolate",
+        "name": "Chocolate Chip Cookies",
+        "category": "snacks",
+        "price": 4.49,
+        "brand": "SweetTreats",
+        "size": "12 oz",
+        "tags": ["sweet", "dessert"]
+      },
+      {
+        "id": "granola-bars",
+        "name": "Honey Oat Granola Bars",
+        "category": "snacks",
+        "price": 4.99,
+        "brand": "NatureBites",
+        "size": "6 count",
+        "tags": ["healthy", "breakfast"]
+      },
+      {
+        "id": "trail-mix",
+        "name": "Classic Trail Mix",
+        "category": "snacks",
+        "price": 5.49,
+        "brand": "NatureBites",
+        "size": "12 oz",
+        "tags": ["healthy", "nuts", "dried-fruit"]
+      },
+      {
+        "id": "popcorn",
+        "name": "Butter Popcorn",
+        "category": "snacks",
+        "price": 3.49,
+        "brand": "PopDelight",
+        "size": "8 oz",
+        "tags": ["salty", "movie-night"]
+      }
+    ],
+    "prepared_food": [
+      {
+        "id": "pizza-cheese",
+        "name": "Cheese Pizza",
+        "category": "prepared_food",
+        "price": 12.99,
+        "size": "Large 14 inch",
+        "tags": ["hot", "italian", "vegetarian"]
+      },
+      {
+        "id": "pizza-pepperoni",
+        "name": "Pepperoni Pizza",
+        "category": "prepared_food",
+        "price": 14.99,
+        "size": "Large 14 inch",
+        "tags": ["hot", "italian", "meat"]
+      },
+      {
+        "id": "sandwich-turkey",
+        "name": "Turkey Club Sandwich",
+        "category": "prepared_food",
+        "price": 8.99,
+        "size": "Full sandwich",
+        "tags": ["cold", "meat", "lunch"]
+      },
+      {
+        "id": "sandwich-veggie",
+        "name": "Veggie Delight Sandwich",
+        "category": "prepared_food",
+        "price": 7.99,
+        "size": "Full sandwich",
+        "tags": ["cold", "vegetarian", "lunch"]
+      },
+      {
+        "id": "salad-caesar",
+        "name": "Caesar Salad",
+        "category": "prepared_food",
+        "price": 9.99,
+        "size": "Large bowl",
+        "tags": ["healthy", "vegetarian", "lunch"]
+      },
+      {
+        "id": "soup-tomato",
+        "name": "Creamy Tomato Soup",
+        "category": "prepared_food",
+        "price": 5.99,
+        "size": "16 oz",
+        "tags": ["hot", "vegetarian", "comfort-food"]
+      }
+    ],
+    "beverages": [
+      {
+        "id": "water-bottle",
+        "name": "Bottled Water",
+        "category": "beverages",
+        "price": 1.49,
+        "brand": "PureSpring",
+        "size": "16 oz",
+        "tags": ["hydration"]
+      },
+      {
+        "id": "soda-cola",
+        "name": "Classic Cola",
+        "category": "beverages",
+        "price": 1.99,
+        "brand": "FizzPop",
+        "size": "20 oz",
+        "tags": ["carbonated", "sweet"]
+      },
+      {
+        "id": "juice-orange",
+        "name": "Fresh Orange Juice",
+        "category": "beverages",
+        "price": 4.99,
+        "brand": "SunnyGrove",
+        "size": "32 oz",
+        "tags": ["healthy", "breakfast", "vitamin-c"]
+      },
+      {
+        "id": "coffee-ground",
+        "name": "Medium Roast Ground Coffee",
+        "category": "beverages",
+        "price": 9.99,
+        "brand": "MorningBrew",
+        "size": "12 oz",
+        "tags": ["caffeine", "breakfast"]
+      }
+    ]
+  }
+}
